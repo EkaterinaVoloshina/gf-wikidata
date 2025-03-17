@@ -121,7 +121,9 @@ class ConcrHelper:
 								text += '</a>'
 				elif isinstance(x,pgf.BIND):
 					bind = True
-		flatten(self.cnc.bracketedLinearize(e))
+		lin = self.cnc.bracketedLinearize(e)
+		if lin:
+			flatten(lin)
 		if len(text) > 0:
 			text = text[0].upper()+text[1:]
 			if self.edit:
@@ -411,7 +413,7 @@ def get_entity(qid):
 	if isinstance(qid,str):
 		u2 = urllib.request.urlopen('https://www.wikidata.org/wiki/Special:EntityData/'+qid+'.json')
 		result = json.loads(u2.read())
-		return result["entities"][qid]
+		return next(iter(result["entities"].values()))
 	elif not qid:
 		return []
 	else:

@@ -635,13 +635,13 @@ def render(cnc, lexeme, entity):
                 position_state = mkCN(w.prince_N)
                 break
             elif qid == 'Q258045': # San Marino
-                position_state = mkCN((w.CompoundN(w.captain_1_N, w.regent_1_N)))
+                position_state = mkCN((w.CompoundN(w.captainMasc_1_N, w.regentMasc_1_N)))
                 break
             elif qid == 'Q2081829': # Afghanistan
                 position_state = mkCN(w.amir_N)
                 break
             elif qid == 'Q1402561': # Burkina Faso
-                position_state = mkCN(w.military_2_A, w.leader_1_N)
+                position_state = mkCN(w.military_2_A, w.leaderMasc_1_N)
                 break
             elif qid == 'Q1472951': # Jamaica
                 position_state = mkCN(w.governor_general_N)
@@ -666,7 +666,7 @@ def render(cnc, lexeme, entity):
                         position_state = mkCN(w.sultan_N)
                         break
                     elif subclass_qid == 'Q7645115': # supreme leader
-                        position_state = mkCN(w.supreme_2_A, w.leader_1_N)
+                        position_state = mkCN(w.supreme_2_A, w.leaderMasc_1_N)
                         break
                     elif subclass_qid == 'Q166382': # emir
                         position_state = mkCN(w.emir_N)
@@ -693,27 +693,27 @@ def render(cnc, lexeme, entity):
                 position_gov = mkCN(w.presidentMasc_3_N, mkAdv(w.of_1_Prep, mkNP(the_Det, mkCN(w.pontifical_1_A, w.commission_1_N)))) 
                 break
             elif qid == 'Q7240364' or qid == 'Q702650': # North Korea / Taiwan
-                position_gov = mkCN(w.premier_2_N)
+                position_gov = mkCN(w.premierMasc_2_N)
                 break
             elif qid == 'Q191827': # Ireland
                 position_gov = mkCN(w.taoiseach_N)
                 break
             elif qid == 'Q258045': # San Marino
-                position_gov = mkCN((w.CompoundN(w.captain_1_N, w.regent_1_N)))
+                position_gov = mkCN((w.CompoundN(w.captainMasc_1_N, w.regentMasc_1_N)))
                 break
             elif qid == 'Q23747483' or qid == 'Q105234803': # Myanmar
-                position_gov = mkCN((w.CompoundN(w.state_4_N, w.counsellor_1_N)))
+                position_gov = mkCN((w.CompoundN(w.state_4_N, w.counsellorMasc_1_N)))
                 break
             elif qid == 'Q16020744': # Bosnia and Herzegovina
                 # no 'chairwoman' in WordNet
-                position_gov = mkCN(w.chairman_N, mkAdv(w.of_1_Prep, mkNP(the_Det, mkCN(w.council_1_N, mkAdv(w.of_1_Prep, mkNP(w.minister_2_N))))))
+                position_gov = mkCN(w.chairman_N, mkAdv(w.of_1_Prep, mkNP(the_Det, mkCN(w.council_1_N, mkAdv(w.of_1_Prep, mkNP(w.ministerMasc_2_N))))))
                 break
 
             entity_office = get_entity(qid)
             if "P279" in entity_office['claims']: # P279 = subclass of
                 for subclass_qid, quad in get_items("P279", entity_office):
                     if subclass_qid == 'Q959664': # premier
-                        position_gov = mkCN(w.premier_2_N)    
+                        position_gov = mkCN(w.premierMasc_2_N)
                         break
                     elif subclass_qid == 'Q30461' or subclass_qid == 'Q248577': #president / president of the republic
                         position_gov = "president"
@@ -725,10 +725,10 @@ def render(cnc, lexeme, entity):
                         position_gov = mkCN(mkCN(w.chief_1_N), mkNP(mkCN(w.executive_A, w.officer_2_N)))
                         break
                     elif subclass_qid == 'Q56022' or subclass_qid == 'Q373085': # Chancellor of Germany / chancellor
-                        position_gov = mkCN(w.chancellor_2_N)
+                        position_gov = mkCN(w.chancellorMasc_2_N)
                         break
                     elif subclass_qid == 'Q1670755': # chief minister
-                        position_gov = mkCN((w.CompoundN(w.chief_1_N, w.minister_2_N)))
+                        position_gov = mkCN((w.CompoundN(w.chiefMasc_1_N, w.ministerMasc_2_N)))
                         break
                     elif subclass_qid == 'Q14212' or subclass_qid == 'Q58869896' or subclass_qid == 'Q2632935': # prime minister / Head of Government of Liechtenstein / minister of state
                         position_gov = mkCN(w.prime_ministerMasc_N)
@@ -1043,9 +1043,11 @@ def render(cnc, lexeme, entity):
             elif quality == "Q7174":
                 quality = mkNP(aSg_Det,mkCN(w.democratic_1_A,w.country_1_N))
                 break
+        else:
             quality = None
-        phr = mkPhr(mkUtt(mkS(pol,mkCl(mkNP(w.freedom_in_the_world_PN), mkVP(mkVPSlash(w.consider_6_V3,mkNP(w.it_Pron)), quality)))), fullStopPunct)
-        yield " "+cnc.linearize(phr)
+        if quality:
+            phr = mkPhr(mkUtt(mkS(pol,mkCl(mkNP(w.freedom_in_the_world_PN), mkVP(mkVPSlash(w.consider_6_V3,mkNP(w.it_Pron)), quality)))), fullStopPunct)
+            yield " "+cnc.linearize(phr)
 
     # designated as terrorist state
     agents = []

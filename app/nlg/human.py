@@ -68,7 +68,12 @@ def render(cnc, lexeme, entity):
 
     current_position = []
     prev_position = []
-    filter = "Fem" if "Q6581072" in gender else "Masc"
+
+    if cnc.name in ["ParseRus"]:
+        filter = "Masc"
+    else:
+        filter = "Fem" if "Q6581072" in gender else "Masc"
+
     for position, qual in cnc.get_lexemes("P39", entity, filter=filter):
         if 'P582' in qual:
             prev_position.append(mkCN(position))
@@ -78,22 +83,19 @@ def render(cnc, lexeme, entity):
         current_position = mkCN(w.and_Conj, current_position)
     prev_position = mkCN(w.and_Conj, prev_position)
 
-    if cnc.name in ["ParseRus"]:
-        occupations = [mkCN(occupation) for occupation in
-                                        cnc.get_lexemes("P106", entity, qual=False, filter="Masc")]
-    else:
-        occupations = mkCN(w.and_Conj,[mkCN(occupation) for occupation in cnc.get_lexemes("P106", entity, qual=False, filter=filter)])
+    occupations = [mkCN(occupation) for occupation in
+                                    cnc.get_lexemes("P106", entity, qual=False, filter=filter)]
 
     if not occupations:
         if get_items("P184",entity):
-            occupations = mkCN(w.scientistFem_N if "Q6581072" in gender else w.scientistMasc_N)
+            occupations = [mkCN(w.scientistFem_N if "Q6581072" in gender else w.scientistMasc_N)]
         elif "Q6581097" in gender:
-            occupations = mkCN(w.man_1_N)
+            occupations = [mkCN(w.man_1_N)]
         elif "Q6581072" in gender:
-            occupations = mkCN(w.woman_1_N)
+            occupations = [mkCN(w.woman_1_N)]
         else:
-            occupations = mkCN(w.human_N)
-    
+            occupations = [mkCN(w.human_N)]
+
     extra_description = False
     all_adjs,ds = cnc.get_demonyms("P27", entity)
     if ds:
@@ -107,35 +109,31 @@ def render(cnc, lexeme, entity):
                     extra_description = mkCN(w.and_Conj,occupations)
                 else:
                     description = mkCN(ap, current_position)  # né / nacido
-                    extra_description = occupations
+                    extra_description = mkCN(w.and_Conj,occupations)
             else:
                 if cnc.name in ["ParseRus"]:
-                    positions = [mkCN(ap, occupations[0]), ]
+                    positions = [mkCN(ap, occupations[0])]
                     positions.extend(occupations[1:])
                     occupations = mkCN(w.and_Conj, occupations)
                     description = mkCN(w.and_Conj, positions)
                 else:
-                    description = mkCN(ap, occupations)
+                    description = mkCN(ap, mkCN(w.and_Conj,occupations))
         else:
-            if cnc.name in ["ParseRus"]:
-                occupations = mkCN(w.and_Conj, occupations)
             np = mkNP(w.and_Conj,[mkNP(pn) for pn in ds])
-            description = mkCN(occupations,mkAdv(w.from_Prep,np))
+            description = mkCN(mkCN(w.and_Conj, occupations),mkAdv(w.from_Prep,np))
             if current_position:
                 if cnc.name in ["ParseRus"]:
                     description = mkCN(mkCN(w.and_Conj, current_position), mkAdv(w.from_Prep, np))
                 else:
                     description = mkCN(current_position,mkAdv(w.from_Prep,np))
-                extra_description = occupations
-            else:
-                description = mkCN(occupations,mkAdv(w.from_Prep,np))
+                extra_description = mkCN(w.and_Conj, occupations)
     else:
         if current_position:
             description = current_position
-            extra_description = occupations
+            extra_description = mkCN(w.and_Conj, occupations)
         else:
-            description = occupations
-    
+            description = mkCN(w.and_Conj, occupations)
+
     birthday   = get_date("P569",entity)
     birthplace = cnc.get_lexemes("P19", entity, qual=False)
     if birthday or birthplace:
@@ -440,7 +438,7 @@ def render(cnc, lexeme, entity):
                                 if start_date:
                                     stmt = w.ExtAdvS(start_date,stmt)
                         #vp = mkVP(w.marry_1_V2,mkNP(spouse_pron))
-                        vp = mkVP(marry(cnc, gender, "V2"))
+                        vp = mkVP(marry(cnc, gender, "V"))
                         #Spanish / French: they married (se casaron/ils se sont mariés)
                         if place:
                             vp = mkVP(vp,mkAdv(place[0]))
@@ -558,10 +556,9 @@ def render(cnc, lexeme, entity):
             if description:
                 if cnc.name in ["ParseFre", "ParseSpa", "ParseBul"]:
                     name = mkNP(the_Det, mkCN(description, name))
-                    vp = mkVP(w.start_2_V2, mkNP(mkNP(aSg_Det, w.relationship_2_N), mkAdv(w.with_Prep, name)))
                 else:
-                    name = mkCN(description, name)
-                    vp = mkVP(w.start_2_V2, mkNP(mkNP(aSg_Det, w.relationship_2_N), mkAdv(w.with_Prep, mkNP(name))))
+                    name = mkNP(mkCN(description, name))
+            vp = mkVP(w.start_2_V2, mkNP(mkNP(aSg_Det, w.relationship_2_N), mkAdv(w.with_Prep, name)))
 
             if cnc.name in ["ParseFre"]:
                 stmt = mkS(useTense, mkCl(mkNP(pron), vp))
@@ -667,12 +664,8 @@ def render(cnc, lexeme, entity):
 
     # award received:
     awards_dict = {}
-    for qid, qual in get_items("P166",entity):
-        award = cnc.get_lex_fun(qid)
-        if not award:
-            continue
-
-        dates = awards_dict.setdefault(award,[])
+    for award,qual in get_entities("P166",entity,qual=True):
+        dates = awards_dict.setdefault(award["id"],(award,[]))[1]
         if "P585" in qual:
             date = get_time_qualifier("P585",qual)
             dates.append(date)
@@ -695,13 +688,17 @@ def render(cnc, lexeme, entity):
         else:
             column_count = 4
         yield "<ul style='column-count: "+str(column_count)+"'>"
-        for key,dates in awards_dict.items():
+        for award,dates in awards_dict.values():
+            lbl = award["labels"]
+            lbl = lbl.get(cnc.lang) or lbl.get("en")
+            if not lbl:
+                continue
             if len(dates) > 1:
                 # it extracts the year part (ex.: 2019) from each date string (ex.: '+2019-00-00T00:00:00Z') and constructs the date_string with years only
                 date_string = ", ".join([date.split('-')[0].lstrip('+') for date in dates])
-                yield "<li>"+cnc.linearize(key) + " (" + cnc.linearize(w.in_1_Prep) + " " + date_string +")"+"</li>"
+                yield "<li><a href=\"index.wsgi?id="+award["id"]+"&lang="+cnc.lang+"\">"+lbl["value"] + "</a> (" + cnc.linearize(w.in_1_Prep) + " " + date_string +")"+"</li>"
             else:
-                yield "<li>"+cnc.linearize(key)+"</li>"
+                yield "<li><a href=\"index.wsgi?id="+award["id"]+"&lang="+cnc.lang+"\">"+lbl["value"]+"</a></li>"
         yield '</ul></p>'
 
     #Nominated for - P1411

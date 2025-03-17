@@ -24,6 +24,10 @@ def render(cnc, lex_expr,entity):
 		renderer = nlg.city.render
 	elif "Q515" in class_qids:
 		renderer = nlg.city.render
+	elif "Q200250" in class_qids:
+		renderer = nlg.city.render
+	elif "Q129676344" in class_qids:
+		renderer = nlg.city.render
 	elif "Q5" in class_qids:
 		renderer = nlg.human.render
 	elif "Q28640" in class_qids or "Q12737077" in class_qids or "Q828803" in class_qids:
